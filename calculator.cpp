@@ -62,31 +62,50 @@ public:
     }
 
     string infixToPostfix(string infix) {
-        stringstream result;
+        stringstream result, operand;
         for (char c : infix) {
             if (isspace(c)) {
+                if (!operand.str().empty()) {
+                    result << operand.str() << " ";
+                    operand.str("");  
+                    operand.clear();
+                }
                 continue;
             }
+
             if (isalnum(c)) {
-                result << c;
+                operand << c;  
             } else if (c == '(') {
                 stack.push(string(1, c));
             } else if (c == ')') {
+                if (!operand.str().empty()) {  
+                    result << operand.str() << " ";
+                    operand.str("");  
+                    operand.clear();
+                }
                 while (!stack.empty() && stack.peek() != "(") {
-                    result << stack.pop();
+                    result << stack.pop() << " ";
                 }
                 if (!stack.empty()) {
-                    stack.pop();
+                    stack.pop();  
                 }
-            } else {
+            } else {  
+                if (!operand.str().empty()) {
+                    result << operand.str() << " ";  
+                    operand.str("");  
+                    operand.clear();
+                }
                 while (!stack.empty() && precedence(stack.peek()[0]) >= precedence(c)) {
-                    result << stack.pop();
+                    result << stack.pop() << " ";
                 }
-                stack.push(string(1, c));
+                stack.push(string(1, c));  
             }
         }
+        if (!operand.str().empty()) {
+            result << operand.str() << " ";  
+        }
         while (!stack.empty()) {
-            result << stack.pop();
+            result << stack.pop() << " ";  
         }
         return result.str();
     }
@@ -94,25 +113,26 @@ public:
     string infixToPrefix(string infix) {
         infix = reverseString(infix);
         for (int i = 0; i < infix.length(); i++) {
-            if (infix[i] == '(') {
-                infix[i] = ')';
-            } else if (infix[i] == ')') {
-                infix[i] = '(';
-            }
+            if (infix[i] == '(') infix[i] = ')';
+            else if (infix[i] == ')') infix[i] = '(';
         }
+
         string postfix = infixToPostfix(infix);
         return reverseString(postfix);
     }
 
     string postfixToInfix(string postfix) {
         Stack<string> s;
-        for (char c : postfix) {
-            if (isalnum(c)) {
-                s.push(string(1, c));
+        stringstream ss(postfix);
+        string token;
+
+        while (ss >> token) {
+            if (isalnum(token[0])) {
+                s.push(token);  
             } else {
                 string operand2 = s.pop();
                 string operand1 = s.pop();
-                string expr = "(" + operand1 + c + operand2 + ")";
+                string expr = "(" + operand1 + " " + token + " " + operand2 + ")";
                 s.push(expr);
             }
         }
@@ -121,13 +141,16 @@ public:
 
     string postfixToPrefix(string postfix) {
         Stack<string> s;
-        for (char c : postfix) {
-            if (isalnum(c)) {
-                s.push(string(1, c));
+        stringstream ss(postfix);
+        string token;
+
+        while (ss >> token) {
+            if (isalnum(token[0])) {
+                s.push(token);  
             } else {
                 string operand2 = s.pop();
                 string operand1 = s.pop();
-                string expr = string(1, c) + operand1 + operand2;
+                string expr = token + " " + operand1 + " " + operand2;  
                 s.push(expr);
             }
         }
@@ -136,14 +159,21 @@ public:
 
     string prefixToInfix(string prefix) {
         Stack<string> s;
-        for (int i = prefix.length() - 1; i >= 0; i--) {
-            char c = prefix[i];
-            if (isalnum(c)) {
-                s.push(string(1, c));
+        stringstream ss(prefix);
+        vector<string> tokens;
+        string token;
+
+        while (ss >> token) {
+            tokens.push_back(token);
+        }
+
+        for (int i = tokens.size() - 1; i >= 0; i--) {
+            if (isalnum(tokens[i][0])) {
+                s.push(tokens[i]);  
             } else {
                 string operand1 = s.pop();
                 string operand2 = s.pop();
-                string expr = "(" + operand1 + c + operand2 + ")";
+                string expr = "(" + operand1 + " " + tokens[i] + " " + operand2 + ")";
                 s.push(expr);
             }
         }
@@ -152,29 +182,90 @@ public:
 
     string prefixToPostfix(string prefix) {
         Stack<string> s;
-        for (int i = prefix.length() - 1; i >= 0; i--) {
-            char c = prefix[i];
-            if (isalnum(c)) {
-                s.push(string(1, c));
+        stringstream ss(prefix);
+        vector<string> tokens;
+        string token;
+
+        while (ss >> token) {
+            tokens.push_back(token);
+        }
+
+        for (int i = tokens.size() - 1; i >= 0; i--) {
+            if (isalnum(tokens[i][0])) {
+                s.push(tokens[i]);  
             } else {
                 string operand1 = s.pop();
                 string operand2 = s.pop();
-                string expr = operand1 + operand2 + c;
+                string expr = operand1 + " " + operand2 + " " + tokens[i];  
                 s.push(expr);
             }
         }
         return s.pop();
     }
 
-    int evaluatePostfix(string postfix) {
+    bool isValidPostfix(string postfix) {
         Stack<int> s;
         for (char c : postfix) {
-            if (isdigit(c)) {
-                s.push(c - '0');
+            if (isspace(c)) {
+                continue;
+            }
+            if (isalnum(c)) {
+                s.push(1);  
+            } else if (isOperator(c)) {
+                if (s.empty()) {
+                    return false;
+                }
+                s.pop(); 
+                if (s.empty()) {
+                    return false; 
+                }
+                s.pop(); 
+                s.push(1); 
+            } else {
+                return false; 
+            }
+        }
+        return s.size() == 1;
+    }
+
+    bool isValidPrefix(string prefix) {
+        Stack<int> s;
+        for (int i = prefix.length() - 1; i >= 0; i--) {
+            char c = prefix[i];
+            if (isspace(c)) {
+                continue;
+            }
+            if (isalnum(c)) {
+                s.push(1); 
+            } else if (isOperator(c)) {
+                if (s.empty()) {
+                    return false;
+                }
+                s.pop();
+                if (s.empty()) {
+                    return false;
+                }
+                s.pop(); 
+                s.push(1); 
+            } else {
+                return false;
+            }
+        }
+        return s.size() == 1;
+    }
+
+    int evaluatePostfix(string postfix) {
+        Stack<int> s;
+        stringstream ss(postfix);
+        string token;
+
+        while (ss >> token) {
+            if (isdigit(token[0])) {
+                s.push(stoi(token));
             } else {
                 int operand2 = s.pop();
                 int operand1 = s.pop();
-                switch (c) {
+                switch (token[0]) {
                     case '+':
                         s.push(operand1 + operand2);
                         break;
@@ -195,14 +286,21 @@ public:
 
     int evaluatePrefix(string prefix) {
         Stack<int> s;
-        for (int i = prefix.length() - 1; i >= 0; i--) {
-            char c = prefix[i];
-            if (isdigit(c)) {
-                s.push(c - '0');
+        stringstream ss(prefix);
+        vector<string> tokens;
+        string token;
+
+        while (ss >> token) {
+            tokens.push_back(token);
+        }
+
+        for (int i = tokens.size() - 1; i >= 0; i--) {
+            if (isdigit(tokens[i][0])) {
+                s.push(stoi(tokens[i]));
             } else {
                 int operand1 = s.pop();
                 int operand2 = s.pop();
-                switch (c) {
+                switch (tokens[i][0]) {
                     case '+':
                         s.push(operand1 + operand2);
                         break;
@@ -221,49 +319,30 @@ public:
         return s.pop();
     }
 
-    int evaluateInfix(string infix) {
-        string postfix = infixToPostfix(infix);
-        return evaluatePostfix(postfix);
-    }
-
-    string reverseString(string expr) {
-        reverse(expr.begin(), expr.end());
-        return expr;
+private:
+    string reverseString(string str) {
+        reverse(str.begin(), str.end());
+        return str;
     }
 };
 
 int main() {
     Calculator calc;
-    string infix, postfix, prefix;
 
-    cout << "Enter an infix expression: ";
-    getline(cin, infix);
+    string infix = "10 + 2 * 6";
+    cout << "Infix to Postfix: " << calc.infixToPostfix(infix) << endl;
+    cout << "Infix to Prefix: " << calc.infixToPrefix(infix) << endl;
 
-    if (calc.isValidInfix(infix)) {
-        postfix = calc.infixToPostfix(infix);
-        prefix = calc.infixToPrefix(infix);
+    string postfix = "10 2 6 * +";
+    cout << "Postfix to Infix: " << calc.postfixToInfix(postfix) << endl;
+    cout << "Postfix to Prefix: " << calc.postfixToPrefix(postfix) << endl;
 
-        cout << "Infix to Postfix: " << postfix << endl;
-        cout << "Infix to Prefix: " << prefix << endl;
+    string prefix = "+ 10 * 2 6";
+    cout << "Prefix to Infix: " << calc.prefixToInfix(prefix) << endl;
+    cout << "Prefix to Postfix: " << calc.prefixToPostfix(prefix) << endl;
 
-        cout << "Evaluation of Postfix: " << calc.evaluatePostfix(postfix) << endl;
-        cout << "Evaluation of Prefix: " << calc.evaluatePrefix(prefix) << endl;
-        cout << "Evaluation of Infix: " << calc.evaluateInfix(infix) << endl;
-
-        string convertedInfix = calc.postfixToInfix(postfix);
-        cout << "Postfix to Infix: " << convertedInfix << endl;
-
-        string convertedPrefix = calc.postfixToPrefix(postfix);
-        cout << "Postfix to Prefix: " << convertedPrefix << endl;
-
-        string convertedPostfix = calc.prefixToPostfix(prefix);
-        cout << "Prefix to Postfix: " << convertedPostfix << endl;
-
-        string convertedInfixFromPrefix = calc.prefixToInfix(prefix);
-        cout << "Prefix to Infix: " << convertedInfixFromPrefix << endl;
-    } else {
-        cout << "Invalid infix expression!" << endl;
-    }
+    cout << "Evaluate Postfix: " << calc.evaluatePostfix(postfix) << endl;
+    cout << "Evaluate Prefix: " << calc.evaluatePrefix(prefix) << endl;
 
     return 0;
 }
