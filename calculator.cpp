@@ -55,6 +55,51 @@ public:
         return (parenthesesBalance == 0 && operandCount == operatorCount + 1);
     }
 
+    bool isValidPostfix(string postfix) {
+        Stack<int> s;
+        for (char c : postfix) {
+            if (isspace(c)) {
+                continue;
+            }
+            if (isalnum(c)) {
+                s.push(1);
+            } else if (isOperator(c)) {
+                if (s.size() < 2) {
+                    return false;
+                }
+                s.pop();
+                s.pop();
+                s.push(1);
+            } else {
+                return false;
+            }
+        }
+        return s.size() == 1;
+    }
+
+    bool isValidPrefix(string prefix) {
+        Stack<int> s;
+        for (int i = prefix.length() - 1; i >= 0; i--) {
+            char c = prefix[i];
+            if (isspace(c)) {
+                continue;
+            }
+            if (isalnum(c)) {
+                s.push(1);
+            } else if (isOperator(c)) {
+                if (s.size() < 2) {
+                    return false;
+                }
+                s.pop();
+                s.pop();
+                s.push(1);
+            } else {
+                return false;
+            }
+        }
+        return s.size() == 1;
+    }
+
     int precedence(char op) {
         if (op == '+' || op == '-') return 1;
         if (op == '*' || op == '/') return 2;
@@ -63,7 +108,7 @@ public:
 
     string infixToPostfix(string infix) {
         if (!isValidInfix(infix)) {
-            return "Invalid infix expression";
+            return "Invalid expression";
         }
 
         stringstream result, operand;
@@ -116,7 +161,7 @@ public:
 
     string infixToPrefix(string infix) {
         if (!isValidInfix(infix)) {
-            return "Invalid infix expression";
+            return "Invalid expression";
         }
 
         infix = reverseString(infix);
@@ -131,7 +176,7 @@ public:
 
     string postfixToInfix(string postfix) {
         if (!isValidPostfix(postfix)) {
-            return "Invalid postfix expression";
+            return "Invalid expression";
         }
 
         Stack<string> s;
@@ -153,7 +198,7 @@ public:
 
     string postfixToPrefix(string postfix) {
         if (!isValidPostfix(postfix)) {
-            return "Invalid postfix expression";
+            return "Invalid expression";
         }
 
         Stack<string> s;
@@ -175,7 +220,7 @@ public:
 
     string prefixToInfix(string prefix) {
         if (!isValidPrefix(prefix)) {
-            return "Invalid prefix expression";
+            return "Invalid expression";
         }
 
         Stack<string> s;
@@ -202,7 +247,7 @@ public:
 
     string prefixToPostfix(string prefix) {
         if (!isValidPrefix(prefix)) {
-            return "Invalid prefix expression";
+            return "Invalid expression";
         }
 
         Stack<string> s;
@@ -229,7 +274,7 @@ public:
 
     int evaluatePostfix(string postfix) {
         if (!isValidPostfix(postfix)) {
-            throw invalid_argument("Invalid postfix expression");
+            throw invalid_argument("Invalid expression");
         }
 
         Stack<int> s;
@@ -263,7 +308,7 @@ public:
 
     int evaluatePrefix(string prefix) {
         if (!isValidPrefix(prefix)) {
-            throw invalid_argument("Invalid prefix expression");
+            throw invalid_argument("Invalid expression");
         }
 
         Stack<int> s;
@@ -306,6 +351,7 @@ private:
         return str;
     }
 };
+
 
 
 int main() {
