@@ -30,7 +30,7 @@ public:
         for (char c : infix) {
             if (isspace(c)) {
                 if (!operand.str().empty()) {
-                    result << operand.str() << " ";
+                    result << operand.str() << " ";  // add operand to result
                     operand.str("");  
                     operand.clear();
                 }
@@ -38,20 +38,20 @@ public:
             }
 
             if (isalnum(c)) {
-                operand << c;  
+                operand << c;  // accumulate digits
             } else if (c == '(') {
-                stack.push(string(1, c));
+                stack.push(string(1, c));  // push open parentheses
             } else if (c == ')') {
                 if (!operand.str().empty()) {  
-                    result << operand.str() << " ";
+                    result << operand.str() << " ";  // add operand before ')'
                     operand.str("");  
                     operand.clear();
                 }
                 while (!stack.empty() && stack.peek() != "(") {
-                    result << stack.pop() << " ";
+                    result << stack.pop() << " ";  // pop until '('
                 }
                 if (!stack.empty()) {
-                    stack.pop();  
+                    stack.pop();  // remove '('
                 }
             } else {  
                 if (!operand.str().empty()) {
@@ -60,7 +60,7 @@ public:
                     operand.clear();
                 }
                 while (!stack.empty() && precedence(stack.peek()[0]) >= precedence(c)) {
-                    result << stack.pop() << " ";
+                    result << stack.pop() << " ";  // pop higher precedence ops
                 }
                 stack.push(string(1, c));  
             }
@@ -79,14 +79,14 @@ public:
             return "Invalid expression";
         }
 
-        infix = reverseString(infix);
+        infix = reverseString(infix);  // reverse for prefix conversion
         for (int i = 0; i < infix.length(); i++) {
             if (infix[i] == '(') infix[i] = ')';
-            else if (infix[i] == ')') infix[i] = '(';
+            else if (infix[i] == ')') infix[i] = '(';  // swap parentheses
         }
 
         string postfix = infixToPostfix(infix);
-        return reverseString(postfix);
+        return reverseString(postfix);  // reverse postfix for prefix
     }
 
     string postfixToInfix(string postfix) {
@@ -104,7 +104,7 @@ public:
             } else {
                 string operand2 = s.pop();
                 string operand1 = s.pop();
-                string expr = "(" + operand1 + " " + token + " " + operand2 + ")";
+                string expr = "(" + operand1 + " " + token + " " + operand2 + ")";  // create infix format
                 s.push(expr);
             }
         }
@@ -126,7 +126,7 @@ public:
             } else {
                 string operand2 = s.pop();
                 string operand1 = s.pop();
-                string expr = token + " " + operand1 + " " + operand2;  
+                string expr = token + " " + operand1 + " " + operand2;  // create prefix format
                 s.push(expr);
             }
         }
@@ -153,7 +153,7 @@ public:
             } else {
                 string operand1 = s.pop();
                 string operand2 = s.pop();
-                string expr = "(" + operand1 + " " + tokens[i] + " " + operand2 + ")";
+                string expr = "(" + operand1 + " " + tokens[i] + " " + operand2 + ")";  // create infix format
                 s.push(expr);
             }
         }
@@ -180,7 +180,7 @@ public:
             } else {
                 string operand1 = s.pop();
                 string operand2 = s.pop();
-                string expr = operand1 + " " + operand2 + " " + tokens[i];  
+                string expr = operand1 + " " + operand2 + " " + tokens[i];  // create postfix format
                 s.push(expr);
             }
         }
@@ -194,20 +194,15 @@ public:
 
         for (int i = 0; i < infix.length(); i++) {
             char c = infix[i];
-            if (isspace(c)) {
-                continue;
-            }
+            if (isspace(c)) continue;
+
             if (isdigit(c)) {
                 operandCount++;
                 lastWasOperand = true;
-                while (i + 1 < infix.length() && isdigit(infix[i + 1])) {
-                    i++;
-                }
+                while (i + 1 < infix.length() && isdigit(infix[i + 1])) i++;
             } else if (isOperator(c)) {
                 operatorCount++;
-                if (!lastWasOperand) {
-                    return false;
-                }
+                if (!lastWasOperand) return false;  // ensure valid operand before operator
                 lastWasOperand = false;
             } else if (c == '(') {
                 parenthesesBalance++;
@@ -215,14 +210,10 @@ public:
                 lastWasOperand = false;
             } else if (c == ')') {
                 parenthesesBalance--;
-                if (parenthesesBalance < 0 || stack.empty()) {
-                    return false;
-                }
+                if (parenthesesBalance < 0 || stack.empty()) return false;  // unmatched ')'
                 stack.pop();
                 lastWasOperand = true;
-            } else {
-                return false;
-            }
+            } else return false;
         }
         return (parenthesesBalance == 0 && operandCount == operatorCount + 1);
     }
@@ -230,21 +221,15 @@ public:
     bool isValidPostfix(string postfix) {
         Stack<int> s;
         for (char c : postfix) {
-            if (isspace(c)) {
-                continue;
-            }
+            if (isspace(c)) continue;
             if (isalnum(c)) {
                 s.push(1);
             } else if (isOperator(c)) {
-                if (s.size() < 2) {
-                    return false;
-                }
+                if (s.size() < 2) return false;  // ensure two operands for operator
                 s.pop();
                 s.pop();
                 s.push(1);
-            } else {
-                return false;
-            }
+            } else return false;
         }
         return s.size() == 1;
     }
@@ -253,21 +238,15 @@ public:
         Stack<int> s;
         for (int i = prefix.length() - 1; i >= 0; i--) {
             char c = prefix[i];
-            if (isspace(c)) {
-                continue;
-            }
+            if (isspace(c)) continue;
             if (isalnum(c)) {
                 s.push(1);
             } else if (isOperator(c)) {
-                if (s.size() < 2) {
-                    return false;
-                }
+                if (s.size() < 2) return false;  // ensure two operands for operator
                 s.pop();
                 s.pop();
                 s.push(1);
-            } else {
-                return false;
-            }
+            } else return false;
         }
         return s.size() == 1;
     }
@@ -283,7 +262,7 @@ public:
             if (isdigit(c)) {
                 int operand = 0;
                 while (i < infix.length() && isdigit(infix[i])) {
-                    operand = operand * 10 + (infix[i] - '0');
+                    operand = operand * 10 + (infix[i] - '0');  // build multi-digit number
                     i++;
                 }
                 i--;
@@ -306,8 +285,8 @@ public:
             } else {
                 while (!operators.empty() && 
                     ((operators.peek() == '*' || operators.peek() == '/') || 
-                        ((operators.peek() == '+' || operators.peek() == '-') && 
-                        (c == '+' || c == '-')))) {
+                    ((operators.peek() == '+' || operators.peek() == '-') && 
+                    (c == '+' || c == '-')))) {
                     int operand2 = operands.pop();
                     int operand1 = operands.pop();
                     char op = operators.pop();
@@ -333,90 +312,14 @@ public:
             else result = operand1 / operand2;
             operands.push(result);
         }
-
         return operands.pop();
     }
 
-
-    int evaluatePostfix(string postfix) {
-        if (!isValidPostfix(postfix)) {
-            throw invalid_argument("Invalid expression");
-        }
-
-        Stack<int> s;
-        stringstream ss(postfix);
-        string token;
-
-        while (ss >> token) {
-            if (isdigit(token[0])) {
-                s.push(stoi(token));
-            } else {
-                int operand2 = s.pop();
-                int operand1 = s.pop();
-                switch (token[0]) {
-                    case '+':
-                        s.push(operand1 + operand2);
-                        break;
-                    case '-':
-                        s.push(operand1 - operand2);
-                        break;
-                    case '*':
-                        s.push(operand1 * operand2);
-                        break;
-                    case '/':
-                        s.push(operand1 / operand2);
-                        break;
-                }
-            }
-        }
-        return s.pop();
-    }
-
-    int evaluatePrefix(string prefix) {
-        if (!isValidPrefix(prefix)) {
-            throw invalid_argument("Invalid expression");
-        }
-
-        Stack<int> s;
-        stringstream ss(prefix);
-        vector<string> tokens;
-        string token;
-
-        while (ss >> token) {
-            tokens.push_back(token);
-        }
-
-        for (int i = tokens.size() - 1; i >= 0; i--) {
-            if (isdigit(tokens[i][0])) {
-                s.push(stoi(tokens[i]));
-            } else {
-                int operand1 = s.pop();
-                int operand2 = s.pop();
-                switch (tokens[i][0]) {
-                    case '+':
-                        s.push(operand1 + operand2);
-                        break;
-                    case '-':
-                        s.push(operand1 - operand2);
-                        break;
-                    case '*':
-                        s.push(operand1 * operand2);
-                        break;
-                    case '/':
-                        s.push(operand1 / operand2);
-                        break;
-                }
-            }
-        }
-        return s.pop();
-    }
-
-private:
-    string reverseString(string str) {
-        reverse(str.begin(), str.end());
-        return str;
+    string reverseString(const string &str) {
+        return string(str.rbegin(), str.rend());
     }
 };
+
 
 
 
