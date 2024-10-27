@@ -140,20 +140,15 @@ public:
 
         Stack<string> s;
         stringstream ss(prefix);
-        vector<string> tokens;
         string token;
 
         while (ss >> token) {
-            tokens.push_back(token);
-        }
-
-        for (int i = tokens.size() - 1; i >= 0; i--) {
-            if (isalnum(tokens[i][0])) {
-                s.push(tokens[i]);  
+            if (isalnum(token[0])) {
+                s.push(token);
             } else {
                 string operand1 = s.pop();
                 string operand2 = s.pop();
-                string expr = "(" + operand1 + " " + tokens[i] + " " + operand2 + ")";  // create infix format
+                string expr = "(" + operand1 + " " + token + " " + operand2 + ")";
                 s.push(expr);
             }
         }
@@ -167,20 +162,15 @@ public:
 
         Stack<string> s;
         stringstream ss(prefix);
-        vector<string> tokens;
         string token;
 
         while (ss >> token) {
-            tokens.push_back(token);
-        }
-
-        for (int i = tokens.size() - 1; i >= 0; i--) {
-            if (isalnum(tokens[i][0])) {
-                s.push(tokens[i]);  
+            if (isalnum(token[0])) {
+                s.push(token);
             } else {
                 string operand1 = s.pop();
                 string operand2 = s.pop();
-                string expr = operand1 + " " + operand2 + " " + tokens[i];  // create postfix format
+                string expr = operand1 + " " + operand2 + " " + token;
                 s.push(expr);
             }
         }
