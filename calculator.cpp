@@ -21,152 +21,182 @@ public:
         return 0;
     }
 
+    // Convert infix expression to postfix
     string infixToPostfix(string infix) {
+        if (!isValidInfix(infix)) {
+            return "Invalid expression";
+        }
+
         stringstream result, operand;
         for (char c : infix) {
             if (isspace(c)) {
-                if (!operand.str().empty()) {  // If there's an operand being built, push it to the result
-                    result << operand.str() << " ";
-                    operand.str("");  // Clear the operand buffer
+                if (!operand.str().empty()) {
+                    result << operand.str() << " ";  // add operand to result
+                    operand.str("");
                     operand.clear();
                 }
                 continue;
             }
 
             if (isalnum(c)) {
-                operand << c;  // Collect multi-digit numbers or variables
+                operand << c;  // accumulate digits
             } else if (c == '(') {
-                stack.push(string(1, c));
+                stack.push(string(1, c));  // push open parentheses
             } else if (c == ')') {
-                if (!operand.str().empty()) {  // Add any pending operand before handling the parenthesis
-                    result << operand.str() << " ";
-                    operand.str("");  // Clear the operand buffer
+                if (!operand.str().empty()) {  
+                    result << operand.str() << " ";  // add operand before ')'
+                    operand.str("");  
                     operand.clear();
                 }
                 while (!stack.empty() && stack.peek() != "(") {
-                    result << stack.pop() << " ";
+                    result << stack.pop() << " ";  // pop until '('
                 }
                 if (!stack.empty()) {
-                    stack.pop();  // Pop the '('
+                    stack.pop();  // remove '('
                 }
-            } else {  // Operator
+            } else {  
                 if (!operand.str().empty()) {
-                    result << operand.str() << " ";  // Add pending operand
-                    operand.str("");  // Clear the operand buffer
+                    result << operand.str() << " ";  
+                    operand.str("");  
                     operand.clear();
                 }
                 while (!stack.empty() && precedence(stack.peek()[0]) >= precedence(c)) {
-                    result << stack.pop() << " ";
+                    result << stack.pop() << " ";  // pop higher precedence ops
                 }
-                stack.push(string(1, c));  // Push the operator
+                stack.push(string(1, c));  
             }
         }
         if (!operand.str().empty()) {
-            result << operand.str() << " ";  // Add any remaining operand
+            result << operand.str() << " ";  
         }
         while (!stack.empty()) {
-            result << stack.pop() << " ";  // Pop remaining operators
+            result << stack.pop() << " ";  
         }
         return result.str();
     }
 
+    // Convert infix expression to prefix
     string infixToPrefix(string infix) {
-        // Reverse the infix expression and swap parentheses
-        infix = reverseString(infix);
+        if (!isValidInfix(infix)) {
+            return "Invalid expression";
+        }
+
+        infix = reverseString(infix);  // reverse for prefix conversion
         for (int i = 0; i < infix.length(); i++) {
             if (infix[i] == '(') infix[i] = ')';
-            else if (infix[i] == ')') infix[i] = '(';
+            else if (infix[i] == ')') infix[i] = '(';  // swap parentheses
         }
 
-        // Convert to postfix and reverse the result
         string postfix = infixToPostfix(infix);
-        return reverseString(postfix);
+        return reverseString(postfix);  // reverse postfix for prefix
     }
 
+    // Convert postfix expression to infix
     string postfixToInfix(string postfix) {
+        if (!isValidPostfix(postfix)) {
+            return "Invalid expression";
+        }
+
         Stack<string> s;
         stringstream ss(postfix);
         string token;
 
         while (ss >> token) {
             if (isalnum(token[0])) {
-                s.push(token);  // If it's a number or variable, push it to the stack
+                s.push(token);  
             } else {
                 string operand2 = s.pop();
                 string operand1 = s.pop();
-                string expr = "(" + operand1 + token + operand2 + ")";
+                string expr = "(" + operand1 + " " + token + " " + operand2 + ")";  // create infix format
                 s.push(expr);
             }
         }
         return s.pop();
     }
 
+    // Convert postfix expression to prefix
     string postfixToPrefix(string postfix) {
+        if (!isValidPostfix(postfix)) {
+            return "Invalid expression";
+        }
+
         Stack<string> s;
         stringstream ss(postfix);
         string token;
 
         while (ss >> token) {
             if (isalnum(token[0])) {
-                s.push(token);  // Push operands to the stack
+                s.push(token);  
             } else {
-                string operand2 = s.pop();
                 string operand1 = s.pop();
-                string expr = token + operand1 + operand2;  // Form the prefix expression
+                string operand2 = s.pop();
+                string expr = token + " " + operand1 + " " + operand2;  // create prefix format
                 s.push(expr);
             }
         }
         return s.pop();
     }
 
+    // Convert prefix expression to infix
     string prefixToInfix(string prefix) {
-        Stack<string> s;
-        stringstream ss(prefix);
-        vector<string> tokens;
-        string token;
-
-        // Collect all tokens in reverse order
-        while (ss >> token) {
-            tokens.push_back(token);
+        if (!isValidPrefix(prefix)) {
+            return "Invalid expression";
         }
 
-        // Process in reverse
-        for (int i = tokens.size() - 1; i >= 0; i--) {
-            if (isalnum(tokens[i][0])) {
-                s.push(tokens[i]);  // Push operands
+        Stack<string> s;
+        stringstream ss(prefix);
+        string token;
+
+        // Collect tokens directly into a stack
+        Stack<string> tokens;
+        while (ss >> token) {
+            tokens.push(token);
+        }
+
+        // Process tokens in reverse
+        while (!tokens.empty()) {
+            string current = tokens.pop();
+            if (isalnum(current[0])) {
+                s.push(current);  // Push operands
             } else {
                 string operand1 = s.pop();
                 string operand2 = s.pop();
-                string expr = "(" + operand1 + tokens[i] + operand2 + ")";
+                string expr = "(" + operand1 + " " + current + " " + operand2 + ")";  // Create infix format
                 s.push(expr);
             }
         }
-        return s.pop();
+        return s.pop();  // Return final expression
     }
 
+    // Convert prefix expression to postfix
     string prefixToPostfix(string prefix) {
-        Stack<string> s;
-        stringstream ss(prefix);
-        vector<string> tokens;
-        string token;
-
-        // Collect all tokens in reverse order
-        while (ss >> token) {
-            tokens.push_back(token);
+        if (!isValidPrefix(prefix)) {
+            return "Invalid expression";
         }
 
-        // Process in reverse
-        for (int i = tokens.size() - 1; i >= 0; i--) {
-            if (isalnum(tokens[i][0])) {
-                s.push(tokens[i]);  // Push operands
+        Stack<string> s;
+        stringstream ss(prefix);
+        string token;
+
+        // Collect tokens directly into a stack
+        Stack<string> tokens;
+        while (ss >> token) {
+            tokens.push(token);
+        }
+
+        // Process tokens in reverse
+        while (!tokens.empty()) {
+            string current = tokens.pop();
+            if (isalnum(current[0])) {
+                s.push(current);  // Push operands
             } else {
                 string operand1 = s.pop();
                 string operand2 = s.pop();
-                string expr = operand1 + operand2 + tokens[i];  // Form postfix expression
+                string expr = operand1 + " " + operand2 + " " + current;  // Create postfix format
                 s.push(expr);
             }
         }
-        return s.pop();
+        return s.pop();  // Return final expression
     }
 
     bool isValidInfix(string infix) {
@@ -355,22 +385,29 @@ public:
     }
 
     int evaluatePrefix(string prefix) {
-        Stack<int> s;
-        stringstream ss(prefix);
-        vector<string> tokens;
-        string token;
-
-        while (ss >> token) {
-            tokens.push_back(token);
+        if (!isValidPrefix(prefix)) {
+            throw invalid_argument("Invalid prefix expression");
         }
 
-        for (int i = tokens.size() - 1; i >= 0; i--) {
-            if (isdigit(tokens[i][0])) {
-                s.push(stoi(tokens[i]));
+        Stack<int> s;
+        stringstream ss(prefix);
+        string token;
+
+        // Collect tokens directly into the stack
+        Stack<string> tokens;
+        while (ss >> token) {
+            tokens.push(token);
+        }
+
+        // Process tokens in reverse
+        while (!tokens.empty()) {
+            string current = tokens.pop();
+            if (isdigit(current[0])) {
+                s.push(stoi(current));  // Convert to int and push
             } else {
                 int operand1 = s.pop();
                 int operand2 = s.pop();
-                switch (tokens[i][0]) {
+                switch (current[0]) {
                     case '+':
                         s.push(operand1 + operand2);
                         break;
@@ -383,10 +420,12 @@ public:
                     case '/':
                         s.push(operand1 / operand2);
                         break;
+                    default:
+                        throw invalid_argument("Invalid operator");
                 }
             }
         }
-        return s.pop();
+        return s.pop();  // Return the result
     }
 
 private:
