@@ -92,10 +92,8 @@ public:
     }
 
     // Convert postfix expression to infix
-    string postfixToInfix(string postfix) {
-        if (!isValidPostfix(postfix)) {
-            return "Invalid expression";
-        }
+   string postfixToInfix(string postfix) {
+        if (!isValidPostfix(postfix)) return "Invalid expression";
 
         Stack<string> s;
         stringstream ss(postfix);
@@ -103,15 +101,16 @@ public:
 
         while (ss >> token) {
             if (isalnum(token[0])) {
-                s.push(token);  
-            } else {
-                string operand2 = s.pop();
-                string operand1 = s.pop();
-                string expr = "(" + operand1 + " " + token + " " + operand2 + ")";  // create infix format
+                s.push(token);
+            } else if (isOperator(token[0])) {
+                if (s.size() < 2) return "Invalid expression";
+                string operand2 = s.peek(); s.pop();
+                string operand1 = s.peek(); s.pop();
+                string expr = "(" + operand1 + " " + token + " " + operand2 + ")";
                 s.push(expr);
             }
         }
-        return s.pop();
+        return s.peek();
     }
 
     // Convert postfix expression to prefix
@@ -240,54 +239,54 @@ public:
     }
 
     bool isValidPostfix(string postfix) {
-        Stack<int> s;
-        for (char c : postfix) {
-            if (isspace(c)) {
-                continue;  // Ignore spaces
-            }
-            if (isalnum(c)) {
-                s.push(1);  // Push a dummy value (just to indicate a valid operand)
-            } else if (isOperator(c)) {
-                if (s.empty()) {
-                    return false; // No operands available for the operator
-                }
-                s.pop(); // Remove one operand
-                if (s.empty()) {
-                    return false; // No operand available for the second operand
-                }
-                s.pop(); // Remove the second operand
-                s.push(1); // Push a dummy value back for the result
-            } else {
-                return false; // Invalid character
-            }
-        }
-        return s.size() == 1; // There should be exactly one result in the stack
-    }
+            Stack<int> s;
+            stringstream ss(postfix);
+            string token;
 
-    bool isValidPrefix(string prefix) {
-        Stack<int> s;
-        for (int i = prefix.length() - 1; i >= 0; i--) {
-            char c = prefix[i];
-            if (isspace(c)) {
-                continue; // Ignore spaces
+            while (ss >> token) {
+                if (isdigit(token[0])) {
+                    s.push(1);
+                } else if (isOperator(token[0])) {
+                    if (s.size() < 2) return false;
+                    s.pop();
+                    s.pop();
+                    s.push(1);
+                } else {
+                    return false;
+                }
             }
-            if (isalnum(c)) {
-                s.push(1); // Push a dummy value (just to indicate a valid operand)
-            } else if (isOperator(c)) {
-                if (s.empty()) {
-                    return false; // No operands available for the operator
-                }
-                s.pop(); // Remove one operand
-                if (s.empty()) {
-                    return false; // No operand available for the second operand
-                }
-                s.pop(); // Remove the second operand
-                s.push(1); // Push a dummy value back for the result
+            return s.size() == 1;
+        }
+
+        bool isValidPrefix(string prefix) {
+        Stack<int> s;
+        stringstream ss(prefix);
+        Stack<string> tokens;  // Temporary stack to hold tokens in reverse order
+
+        // Push tokens onto a stack to reverse their order
+        string token;
+        while (ss >> token) {
+            tokens.push(token);
+        }
+
+        // Process tokens in reverse order
+        while (!tokens.empty()) {
+            token = tokens.peek();
+            tokens.pop();
+
+            if (isdigit(token[0])) {
+                s.push(1);  // Push a dummy value for an operand
+            } else if (isOperator(token[0])) {
+                if (s.size() < 2) return false;  // Need at least two operands
+                s.pop();  // Pop two operands for the operator
+                s.pop();
+                s.push(1);  // Push a dummy result back
             } else {
-                return false; // Invalid character
+                return false;  // Invalid character
             }
         }
-        return s.size() == 1; // There should be exactly one result in the stack
+
+        return s.size() == 1;  // There should be exactly one result in the stack
     }
 
     int evaluateInfix(string infix) {
