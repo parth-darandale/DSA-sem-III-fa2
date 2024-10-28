@@ -4,6 +4,7 @@
 #include <cctype>
 #include <algorithm>
 #include "stack.h"
+#include <cmath>
 
 using namespace std;
 
@@ -12,12 +13,13 @@ class Calculator {
 
 public:
     bool isOperator(char c) {
-        return (c == '+' || c == '-' || c == '*' || c == '/');
+        return (c == '+' || c == '-' || c == '*' || c == '/' || c == '%' || c == '^');
     }
 
     int precedence(char op) {
         if (op == '+' || op == '-') return 1;
-        if (op == '*' || op == '/') return 2;
+        if (op == '*' || op == '/' || op == '%') return 2;
+        if (op == '^') return 3; 
         return 0;
     }
 
@@ -316,6 +318,8 @@ public:
                     if (op == '+') result = operand1 + operand2;
                     else if (op == '-') result = operand1 - operand2;
                     else if (op == '*') result = operand1 * operand2;
+                    else if (op == '%') result = operand1 % operand2;
+                    else if (op == '^') result = operand1 ^ operand2;
                     else result = operand1 / operand2;
                     operands.push(result);
                 }
@@ -323,7 +327,8 @@ public:
             } else {
                 while (!operators.empty() && 
                     ((operators.peek() == '*' || operators.peek() == '/') || 
-                    ((operators.peek() == '+' || operators.peek() == '-') && 
+                    ((operators.peek() == '+' || operators.peek() == '-')) || 
+                    ((operators.peek() == '%' || operators.peek() == '^') && 
                     (c == '+' || c == '-')))) {
                     int operand2 = operands.pop();
                     int operand1 = operands.pop();
@@ -332,6 +337,8 @@ public:
                     if (op == '+') result = operand1 + operand2;
                     else if (op == '-') result = operand1 - operand2;
                     else if (op == '*') result = operand1 * operand2;
+                    else if (op == '%') result = operand1 % operand2;
+                    else if (op == '^') result = operand1 ^ operand2;
                     else result = operand1 / operand2;
                     operands.push(result);
                 }
@@ -347,6 +354,8 @@ public:
             if (op == '+') result = operand1 + operand2;
             else if (op == '-') result = operand1 - operand2;
             else if (op == '*') result = operand1 * operand2;
+            else if (op == '%') result = operand1 % operand2;
+            else if (op == '^') result = operand1 ^ operand2;
             else result = operand1 / operand2;
             operands.push(result);
         }
@@ -354,78 +363,96 @@ public:
     }
 
     int evaluatePostfix(string postfix) {
-        Stack<int> s;
-        stringstream ss(postfix);
-        string token;
+    Stack<int> s;
+    stringstream ss(postfix);
+    string token;
 
-        while (ss >> token) {
-            if (isdigit(token[0])) {
-                s.push(stoi(token));
-            } else {
-                int operand2 = s.pop();
-                int operand1 = s.pop();
-                switch (token[0]) {
-                    case '+':
-                        s.push(operand1 + operand2);
-                        break;
-                    case '-':
-                        s.push(operand1 - operand2);
-                        break;
-                    case '*':
-                        s.push(operand1 * operand2);
-                        break;
-                    case '/':
-                        s.push(operand1 / operand2);
-                        break;
-                }
+    while (ss >> token) {
+        if (isdigit(token[0])) {
+            s.push(stoi(token));
+        } else {
+            int operand2 = s.pop();
+            int operand1 = s.pop();
+            int result;
+
+            switch (token[0]) {
+                case '+':
+                    result = operand1 + operand2;
+                    break;
+                case '-':
+                    result = operand1 - operand2;
+                    break;
+                case '*':
+                    result = operand1 * operand2;
+                    break;
+                case '/':
+                    result = operand1 / operand2;
+                    break;
+                case '%':
+                    result = operand1 % operand2;
+                    break;
+                case '^':
+                    result = pow(operand1, operand2);  // Use pow for exponentiation
+                    break;
+                default:
+                    throw invalid_argument("Invalid operator");
             }
+            s.push(result);
         }
-        return s.pop();
+    }
+    return s.pop();
+}
+
+int evaluatePrefix(string prefix) {
+    if (!isValidPrefix(prefix)) {
+        throw invalid_argument("Invalid prefix expression");
     }
 
-    int evaluatePrefix(string prefix) {
-        if (!isValidPrefix(prefix)) {
-            throw invalid_argument("Invalid prefix expression");
-        }
+    Stack<int> s;
+    stringstream ss(prefix);
+    string token;
+    Stack<string> tokens;
 
-        Stack<int> s;
-        stringstream ss(prefix);
-        string token;
-
-        // Collect tokens directly into the stack
-        Stack<string> tokens;
-        while (ss >> token) {
-            tokens.push(token);
-        }
-
-        // Process tokens in reverse
-        while (!tokens.empty()) {
-            string current = tokens.pop();
-            if (isdigit(current[0])) {
-                s.push(stoi(current));  // Convert to int and push
-            } else {
-                int operand1 = s.pop();
-                int operand2 = s.pop();
-                switch (current[0]) {
-                    case '+':
-                        s.push(operand1 + operand2);
-                        break;
-                    case '-':
-                        s.push(operand1 - operand2);
-                        break;
-                    case '*':
-                        s.push(operand1 * operand2);
-                        break;
-                    case '/':
-                        s.push(operand1 / operand2);
-                        break;
-                    default:
-                        throw invalid_argument("Invalid operator");
-                }
-            }
-        }
-        return s.pop();  // Return the result
+    while (ss >> token) {
+        tokens.push(token);
     }
+
+    while (!tokens.empty()) {
+        string current = tokens.pop();
+        if (isdigit(current[0])) {
+            s.push(stoi(current));
+        } else {
+            int operand1 = s.pop();
+            int operand2 = s.pop();
+            int result;
+
+            switch (current[0]) {
+                case '+':
+                    result = operand1 + operand2;
+                    break;
+                case '-':
+                    result = operand1 - operand2;
+                    break;
+                case '*':
+                    result = operand1 * operand2;
+                    break;
+                case '/':
+                    result = operand1 / operand2;
+                    break;
+                case '%':
+                    result = operand1 % operand2;
+                    break;
+                case '^':
+                    result = pow(operand1, operand2);  // Use pow for exponentiation
+                    break;
+                default:
+                    throw invalid_argument("Invalid operator");
+            }
+            s.push(result);
+        }
+    }
+    return s.pop();
+}
 
 private:
     string reverseString(string str) {
@@ -437,7 +464,7 @@ private:
 int main() {
     Calculator calc;
 
-    string infix = "10 + 2 * 6";
+    string infix = "((10 + 2) ^ 2) % 12";
     cout << "Infix to Postfix: " << calc.infixToPostfix(infix) << endl;
     cout << "Infix to Prefix: " << calc.infixToPrefix(infix) << endl;
 
@@ -445,7 +472,7 @@ int main() {
     cout << "Postfix to Infix: " << calc.postfixToInfix(postfix) << endl;
     cout << "Postfix to Prefix: " << calc.postfixToPrefix(postfix) << endl;
 
-    string prefix = "+ 10 * 2 6";
+    string prefix =calc.infixToPrefix(infix);
     cout << "Prefix to Infix: " << calc.prefixToInfix(prefix) << endl;
     cout << "Prefix to Postfix: " << calc.prefixToPostfix(prefix) << endl;
 
